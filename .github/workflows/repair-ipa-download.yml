@@ -1,0 +1,79 @@
+name: Build repair IPA for draft download
+on:
+  workflow_dispatch:
+  push:
+    branches: [MYmain]
+    paths: [.github/workflows/repair-ipa-download.yml, tests/nowplaying/harness.m, Source/NowPlaying/YTMUNowPlayingFix.m]
+permissions:
+  contents: write
+concurrency:
+  group: repair-ipa-draft-download
+  cancel-in-progress: false
+jobs:
+  repair:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ytmu-9.44-playback-widget-fix
+      HOMEBREW_NO_AUTO_UPDATE: '1'
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - name: Require the destination to remain a draft
+        run: |
+          gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft > "$RUNNER_TEMP/is-draft"
+          test "$(cat "$RUNNER_TEMP/is-draft")" = true
+      - name: Download the identical original IPA already in this repository
+        run: |
+          gh api "repos/$GH_REPO/releases/assets/730958140" -H 'Accept: application/octet-stream' > "$RUNNER_TEMP/original.ipa"
+          echo '4844716024ad897e49aaca9d43ec3a190e598d5ff471a2bd09ca9991f3fedee5  '"$RUNNER_TEMP/original.ipa" | shasum -a 256 --check
+      - name: Install signing tool
+        run: brew install ldid
+      - name: Run regression tests
+        run: |
+          python3 -m unittest discover -s tests/packaging -v 2>&1 | tee "$RUNNER_TEMP/repair-validation.log"
+          xcrun clang -fobjc-arc -fblocks -framework Foundation tests/nowplaying/harness.m -o "$RUNNER_TEMP/nowplaying-check" 2>&1 | tee -a "$RUNNER_TEMP/repair-validation.log"
+          "$RUNNER_TEMP/nowplaying-check" 2>&1 | tee -a "$RUNNER_TEMP/repair-validation.log"
+      - name: Record failed regression diagnostics in the unpublished draft
+        if: failure()
+        run: |
+          if [ -f "$RUNNER_TEMP/repair-validation.log" ]; then
+            test "$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)" = true
+            gh release edit "$RELEASE_TAG" --draft=true --notes-file "$RUNNER_TEMP/repair-validation.log"
+          fi
+      - name: Build and package repair
+        run: |
+          bash scripts/build-repair.sh "$RUNNER_TEMP/YTMUPlaybackRepair.dylib"
+          python3 scripts/patch-repair.py "$RUNNER_TEMP/original.ipa" "$RUNNER_TEMP/YTMUltimate_9.44_Playback_Widget_Fix.ipa" --dylib "$RUNNER_TEMP/YTMUPlaybackRepair.dylib"
+          python3 scripts/check-widgets.py "$RUNNER_TEMP/original.ipa" "$RUNNER_TEMP/YTMUltimate_9.44_Playback_Widget_Fix.ipa"
+      - name: Attach to draft without publishing
+        run: |
+          test "$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)" = true
+          gh release upload "$RELEASE_TAG" "$RUNNER_TEMP/YTMUltimate_9.44_Playback_Widget_Fix.ipa" --clobber
+          python3 - <<'PY'
+          import hashlib, os
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP'])
+          digest = hashlib.sha256((root / 'YTMUltimate_9.44_Playback_Widget_Fix.ipa').read_bytes()).hexdigest()
+          text = f'''YouTube Music 9.44.2 잠금화면·홈 위젯 수정 검증용 IPA입니다.
+
+          제공된 원본과 SHA-256이 동일한 저장소의 기존 IPA를 사용해 GitHub Actions에서 다시 빌드했습니다. 잠금화면 연결 패치와 앱·위젯 양쪽의 App Group 브리지가 포함됩니다.
+
+          Now Playing 앱 열기 진단 설정 항목과 켜기/끄기 UI를 제거했습니다. 앱 연결 패치는 재생 시 자동 적용되며, 이전 버전에서 꺼 둔 설정에도 영향을 받지 않습니다.
+
+          Feather에서 앱·위젯 확장·dylib 전체를 재서명해 설치하세요. 위젯 확장을 유지하고 앱과 위젯에 공통 App Group을 허용하는 프로파일이 필요합니다.
+
+          Python 회귀 테스트와 macOS MediaRemote 모의 테스트, iOS 컴파일 및 위젯 보존 검사를 수행합니다. 이번 설정 항목 제거 버전의 실기기 동작은 설치 후 확인이 필요합니다.
+
+          SHA-256: `{digest}`
+
+          파일 전달용 초안이며 공개 게시하지 않습니다.
+          '''
+          (root / 'repair-notes.md').write_text(text)
+          PY
+          gh release edit "$RELEASE_TAG" --draft=true --notes-file "$RUNNER_TEMP/repair-notes.md"
+          gh release view "$RELEASE_TAG" --json isDraft,assets,url

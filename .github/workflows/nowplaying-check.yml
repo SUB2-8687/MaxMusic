@@ -1,0 +1,22 @@
+name: Now Playing and widget packaging checks
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - name: Run MediaRemote mock regression tests
+        run: |
+          xcrun clang -fobjc-arc -fblocks -framework Foundation tests/nowplaying/harness.m -o "$RUNNER_TEMP/nowplaying-check"
+          "$RUNNER_TEMP/nowplaying-check"
+      - name: Check widget IPA validation
+        run: python3 -m unittest discover -s tests/packaging -v
+      - name: Compile repair for iOS
+        run: |
+          brew install ldid
+          bash scripts/build-repair.sh "$RUNNER_TEMP/YTMUPlaybackRepair.dylib"

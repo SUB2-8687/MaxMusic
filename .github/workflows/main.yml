@@ -2,38 +2,14 @@ name: Build and Release YTMusicUltimate and MaxMusic
 on:
   workflow_dispatch:
     inputs: 
-      enable_rymd:
-       description: "Integrate Return-YouTube-Music-Dislikes (MaxMusic)"
-       type: boolean
-       required: true
-       default: false
-
-      enable_ytmabc:
-       description: "Integrate YTMABConfig (MaxMusic)"
-       type: boolean
-       required: true
-       default: false
-
-      enable_youmusicpip:
-       description: "Integrate YouMusicPiP (MaxMusic)"
-       type: boolean
-       required: true
-       default: false
-
-      enable_volumeboostyt:
-       description: "Integrate VolumeBoostYT (MaxMusic)"
-       type: boolean
-       required: true
-       default: false
-
-      enable_lastfm:
-       description: "Integrate Last.fm Scrobbler (MaxMusic)"
+      enable_wireguard:
+       description: "App-local WireGuard (in-app tunnel, iOS 17+, no system VPN)"
        type: boolean
        required: true
        default: false
        
       ipa_url:
-        description: "URL to the decrypted IPA file"
+        description: "Decrypted IPA link (direct, or a Dropbox / Google Drive share link copied as-is)"
         default: ""
         required: true
         type: string
@@ -72,18 +48,65 @@ jobs:
       - name: Hide sensitive inputs
         uses: levibostian/action-hide-sensitive-inputs@v1
         with:
-          exclude_inputs: bundle_id,display_name,enable_rymd,enable_ytmabc,enable_youmusicpip,enable_volumeboostyt
+          exclude_inputs: bundle_id,display_name,enable_wireguard
 
-      - name: Validate IPA URL
+      - name: Resolve share link and download IPA
+        env:
+          IPA_URL_INPUT: ${{ inputs.ipa_url }}
         run: |
-          curl -L -r 0-1023 -o sample.part "${{ inputs.ipa_url }}" > /dev/null 2>&1
-          
-          file_type=$(file --mime-type -b sample.part)
+          python3 - <<'PYEOF'
+          import os, re, sys
+          from urllib.parse import urlparse, parse_qs, urlunparse, urlencode
 
+          url = os.environ["IPA_URL_INPUT"].strip()
+          u = urlparse(url)
+          host = (u.hostname or "").lower()
+          q = parse_qs(u.query)
+          kind = "direct"
+
+          if host == "dropbox.com" or host.endswith(".dropbox.com"):
+              # Dropbox share link (dl=0) -> direct download (dl=1), keeps rlkey/st params
+              q.pop("dl", None); q.pop("raw", None)
+              q["dl"] = ["1"]
+              url = urlunparse(u._replace(netloc="www.dropbox.com", query=urlencode(q, doseq=True)))
+              kind = "dropbox"
+          elif host in ("drive.google.com", "docs.google.com", "drive.usercontent.google.com"):
+              m = re.search(r"/file/d/([A-Za-z0-9_-]+)", u.path) or re.search(r"/d/([A-Za-z0-9_-]+)", u.path)
+              fid = m.group(1) if m else (q.get("id") or [None])[0]
+              if not fid:
+                  print("::error::Could not find the file ID in the Google Drive link.")
+                  sys.exit(1)
+              params = {"id": fid, "export": "download", "confirm": "t"}
+              if q.get("resourcekey"):
+                  params["resourcekey"] = q["resourcekey"][0]
+              url = "https://drive.usercontent.google.com/download?" + urlencode(params)
+              kind = "gdrive"
+
+          print(f"Link type: {kind}")
+          with open("ipa_link.env", "w") as f:
+              f.write(f"IPA_DIRECT_URL={url}\n")
+              f.write(f"IPA_LINK_KIND={kind}\n")
+          PYEOF
+
+          IPA_DIRECT_URL="$(sed -n 's/^IPA_DIRECT_URL=//p' ipa_link.env)"
+          IPA_LINK_KIND="$(sed -n 's/^IPA_LINK_KIND=//p' ipa_link.env)"
+          rm -f ipa_link.env
+          # The real URL stays out of the log (it can carry tokens)
+          echo "::add-mask::$IPA_DIRECT_URL"
+          curl -fL --retry 3 --retry-delay 5 -o ytm.ipa "$IPA_DIRECT_URL"
+
+          file_type=$(file --mime-type -b ytm.ipa)
           if [[ "$file_type" != "application/x-ios-app" && "$file_type" != "application/zip" ]]; then
-            echo "::error::Validation failed: The file is not a valid IPA file. Detected type: $file_type."
+            if [ "$IPA_LINK_KIND" != "direct" ]; then
+              echo "::error::Validation failed: the downloaded file is not an IPA (detected: $file_type). Make sure the share link is public ('Anyone with the link') and points to a single .ipa file."
+            else
+              echo "::error::Validation failed: The file is not a valid IPA file. Detected type: $file_type."
+            fi
             exit 1
           fi
+          unzip -tq ytm.ipa > /dev/null || { echo "::error::The downloaded IPA is corrupted or incomplete."; exit 1; }
+          echo "IPA downloaded: $(stat -f%z ytm.ipa) bytes"
+
 
       - name: Install Dependencies
         run: brew install make ldid
@@ -124,9 +147,6 @@ jobs:
       - name: Install cyan
         run: pipx install --force https://github.com/asdfzxcvbn/pyzule-rw/archive/main.zip
 
-      - name: Download YouTube Music
-        run: wget "${{ inputs.ipa_url }}" --no-verbose -O ytm.ipa
-
       - name: Get YouTube Music Version 
         run: |
           unzip -q ytm.ipa -d ytmextracted
@@ -156,104 +176,165 @@ jobs:
             cd $THEOS/include && git clone --quiet --depth=1 https://github.com/PoomSmart/YouTubeMusicHeader.git
           fi
 
-      - name: Clone Return-YouTube-Dislikes (for Return-YouTube-Music-Dislikes)
-        if: ${{ inputs.enable_rymd }}
-        run: git clone --quiet --depth=1 https://github.com/PoomSmart/Return-YouTube-Dislikes.git
+      - name: Set up Go (WireGuard)
+        if: ${{ inputs.enable_wireguard }}
+        uses: actions/setup-go@v6.5.0
+        with:
+          go-version-file: main/WireGuard/go.mod
+          cache-dependency-path: main/WireGuard/go.sum
 
-      - name: Clone YouPiP (for YouMusicPiP)
-        if: ${{ inputs.enable_youmusicpip }}
-        run: git clone --quiet --depth=1 https://github.com/PoomSmart/YouPiP.git
+      - name: Build WireGuard engine (iOS arm64)
+        if: ${{ inputs.enable_wireguard }}
+        run: bash main/WireGuard/build-ios.sh
 
-      - name: Clone Return-YouTube-Music-Dislikes
-        if: ${{ inputs.enable_rymd }}
-        run: git clone --quiet --depth=1 https://github.com/Mark02-2012/RYMD-MaxMusic.git
-
-      - name: Clone YTMABConfig
-        if: ${{ inputs.enable_ytmabc }}
-        run: git clone --quiet --depth=1 https://github.com/PoomSmart/YTMABConfig.git
-
-      - name: Clone YouMusicPiP
-        if: ${{ inputs.enable_youmusicpip }}
-        run: git clone --quiet --depth=1 https://github.com/PoomSmart/YouMusicPiP.git
-
-      - name: Clone VolumeBoostYT
-        if: ${{ inputs.enable_volumeboostyt }}
-        run: git clone --quiet --depth=1 https://github.com/VasirakCalgux/VolumeBoostYT.git
-
-      - name: Clone Last.fm Scrobbler
-        if: ${{ inputs.enable_lastfm }}
-        run: git clone --quiet --depth=1 https://github.com/ImMALWARE/ios-yt-music-last.fm.git
-
-      - name: Build Return-YouTube-Music-Dislikes
-        if: ${{ inputs.enable_rymd }}
+      - name: Scan YouTube Music transport classes (WireGuard)
+        if: ${{ inputs.enable_wireguard }}
         run: |
-          cd RYMD-MaxMusic && make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
-          mv packages/*.deb ../rymd.deb
+          python3 -I main/tools/ytm_transport_scan.py ytm.ipa --markdown | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' ytmextracted/Payload/YouTubeMusic.app/Info.plist)" != "9.42.2" ]; then
+            echo "::warning::WireGuard transport patches were verified on YouTube Music 9.42.2. For this version the music-loader patch is decided at runtime; check the in-app diagnostics after playback."
+          fi
 
-      - name: Build YTMABConfig
-        if: ${{ inputs.enable_ytmabc }}
+      - name: Keep only English and Korean language packs
         run: |
-          cd YTMABConfig && make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
-          mv packages/*.deb ../ytmabc.deb
-
-      - name: Build YouMusicPiP
-        if: ${{ inputs.enable_youmusicpip }}
-        run: |
-          cd YouMusicPiP && make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
-          mv packages/*.deb ../youmusicpip.deb
-
-      - name: Build VolumeBoostYT
-        if: ${{ inputs.enable_volumeboostyt }}
-        run: |
-          cd VolumeBoostYT && make clean package DEBUG=0 FINALPACKAGE=1
-          mv packages/*.deb ../volumeboostyt.deb
-
-      - name: Build Last.fm Scrobbler
-        if: ${{ inputs.enable_lastfm }}
-        run: |
-          cd ios-yt-music-last.fm && make clean package DEBUG=0 FINALPACKAGE=1
-          mv packages/*.deb ../lastfm.deb
+          BUNDLE="main/layout/Library/Application Support/YTMusicUltimate.bundle"
+          if [ ! -d "$BUNDLE" ]; then
+            echo "::error::Language bundle folder not found: $BUNDLE"
+            exit 1
+          fi
+          for dir in "$BUNDLE"/*.lproj; do
+            case "$(basename "$dir")" in
+              en.lproj|ko.lproj) ;;
+              *) rm -rf "$dir"; echo "  removed $(basename "$dir")" ;;
+            esac
+          done
+          echo "Remaining language packs:"
+          for dir in "$BUNDLE"/*.lproj; do echo "  $(basename "$dir")"; done
+          [ -f "$BUNDLE/en.lproj/Localizable.strings" ] || { echo "::error::en.lproj is missing"; exit 1; }
+          [ -f "$BUNDLE/ko.lproj/Localizable.strings" ] || { echo "::error::ko.lproj is missing"; exit 1; }
+          if [ "${{ inputs.enable_wireguard }}" = "true" ]; then
+            for L in en ko; do
+              [ -f "$BUNDLE/$L.lproj/WireGuard.strings" ] || { echo "::error::$L.lproj/WireGuard.strings is missing"; exit 1; }
+            done
+          fi
 
       - name: Build Modified YTMusicUltimate Tweak
         run: |
-          cd main && make clean package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless SIDELOADING=1
+          WG_FLAG=""
+          if [ "${{ inputs.enable_wireguard }}" = "true" ]; then WG_FLAG="WIREGUARD=1"; fi
+          cd main && make clean package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless SIDELOADING=1 $WG_FLAG
           mv packages/*.deb ../ytmult.deb
 
-      - name: Determines the Release Title Prefix
+      - name: Patch YTMusicUltimate Korean localization
         run: |
-          if [ "${{ inputs.enable_rymd }}" = "false" ] && \
-             [ "${{ inputs.enable_volumeboostyt }}" = "false" ] && \
-             [ "${{ inputs.enable_youmusicpip }}" = "false" ] && \
-             [ "${{ inputs.enable_ytmabc }}" = "false" ]; then
-            
-            echo "RELEASE_PREFIX=YTMusicUltimate" >> $GITHUB_ENV
-          else
-            echo "RELEASE_PREFIX=MaxMusic" >> $GITHUB_ENV
+          # 이 워크플로는 저장소 소스를 빌드하지 않고 미리 빌드된 deb를 받아 쓰기 때문에
+          # layout/ 안의 ko.lproj가 반영되지 않는다. 받은 deb 안에 직접 넣어준다.
+          KO_STRINGS="${{ github.workspace }}/main/layout/Library/Application Support/YTMusicUltimate.bundle/ko.lproj/Localizable.strings"
+          if [ ! -f "$KO_STRINGS" ]; then
+            echo "  ⏭️  ko.lproj/Localizable.strings 없음 — 한글 패치 건너뜀"
+            exit 0
           fi
+
+          DEB="${{ github.workspace }}/ytmult.deb"
+          WORKDIR="$(mktemp -d)"
+          cd "$WORKDIR"
+
+          ar x "$DEB"
+          DATA_MEMBER=$(ls data.tar.* | head -1)
+          CONTROL_MEMBER=$(ls control.tar.* | head -1)
+          mkdir data_extracted
+          tar -xf "$DATA_MEMBER" -C data_extracted
+
+          BUNDLE=$(find data_extracted -type d -name 'YTMusicUltimate.bundle' | head -1)
+          if [ -z "$BUNDLE" ]; then
+            echo "::error::deb 안에서 YTMusicUltimate.bundle 폴더를 찾지 못했습니다. deb 내부 구조:"
+            find data_extracted -maxdepth 6 | head -50
+            exit 1
+          fi
+          echo "  🔤 [YTMusicUltimate] 번들 위치: $BUNDLE"
+          mkdir -p "$BUNDLE/ko.lproj"
+          cp "$KO_STRINGS" "$BUNDLE/ko.lproj/Localizable.strings"
+          # WireGuard 화면의 문구는 같은 .lproj 안의 WireGuard.strings(별도 언어팩)에 있다. en·ko 모두 넣는다.
+          for L in en ko; do
+            WG_STRINGS="${{ github.workspace }}/main/layout/Library/Application Support/YTMusicUltimate.bundle/$L.lproj/WireGuard.strings"
+            if [ -f "$WG_STRINGS" ]; then
+              mkdir -p "$BUNDLE/$L.lproj"
+              cp "$WG_STRINGS" "$BUNDLE/$L.lproj/WireGuard.strings"
+              echo "  🔤 [YTMusicUltimate] $L.lproj/WireGuard.strings 삽입"
+            fi
+          done
+
+          # data.tar를 gzip으로 다시 패키징
+          cd data_extracted
+          tar --numeric-owner --owner=0 --group=0 -cf ../data.tar .
+          cd ..
+          gzip -f -9 data.tar
+
+          # macOS의 ar은 정적 라이브러리(.a)용이라 새 아카이브 생성 시 ranlib이 .deb를 깨뜨린다.
+          # OS ar에 의존하지 않고 Python으로 공용 ar 포맷을 직접 만든다.
+          python3 - "$DEB" "$CONTROL_MEMBER" << 'PYEOF'
+          import sys
+
+          def header(name, size):
+              if len(name) > 16:
+                  raise SystemExit(f"member name too long for ar format: {name}")
+              h = (
+                  name.ljust(16) +
+                  "0".ljust(12) +
+                  "0".ljust(6) +
+                  "0".ljust(6) +
+                  "100644".ljust(8) +
+                  str(size).ljust(10) +
+                  "`\n"
+              )
+              assert len(h) == 60, len(h)
+              return h.encode("ascii")
+
+          out_path = sys.argv[1]
+          members = ["debian-binary", sys.argv[2], "data.tar.gz"]
+          with open(out_path, "wb") as out:
+              out.write(b"!<arch>\n")
+              for name in members:
+                  with open(name, "rb") as f:
+                      data = f.read()
+                  out.write(header(name, len(data)))
+                  out.write(data)
+                  if len(data) % 2 == 1:
+                      out.write(b"\n")
+          print(f"  📦 [YTMusicUltimate] 재패키징 완료: {out_path}")
+          PYEOF
+
+          # 재패키징 결과 검증 (깨진 deb가 cyan까지 넘어가지 않도록)
+          SIZE=$(stat -f%z "$DEB")
+          echo "  📏 재패키징된 deb 크기: $SIZE bytes"
+          if [ "$SIZE" -lt 10000 ]; then
+            echo "::error::재패키징된 deb가 비정상적으로 작습니다 ($SIZE bytes)."
+            exit 1
+          fi
+          cd "${{ github.workspace }}"
+          rm -rf "$WORKDIR"
+          echo "  ✅ [YTMusicUltimate] ko.lproj 삽입 완료"
+
+      - name: Release title prefix
+        run: echo "RELEASE_PREFIX=YTMusicUltimate" >> $GITHUB_ENV
+
+      - name: Name suffix for WireGuard builds
+        if: ${{ inputs.enable_wireguard }}
+        run: echo "WG_SUFFIX=_WireGuard" >> $GITHUB_ENV
 
       - name: Inject tweaks into provided IPA
         run: |
-          cyan -i ytm.ipa -o ${{ env.RELEASE_PREFIX }}_2.4.1_${{ env.YTM_VERSION }}.ipa -uwsf *.deb -n "${{ inputs.display_name }}" -b ${{ inputs.bundle_id }} 
+          cyan -i ytm.ipa -o ${{ env.RELEASE_PREFIX }}_2.4.1_${{ env.YTM_VERSION }}${{ env.WG_SUFFIX }}.ipa -uwsf *.deb -n "${{ inputs.display_name }}" -b ${{ inputs.bundle_id }} 
 
-      - name: Determines the Release Tag Prefix
-        run: |
-          if [ "${{ inputs.enable_rymd }}" = "false" ] && \
-             [ "${{ inputs.enable_volumeboostyt }}" = "false" ] && \
-             [ "${{ inputs.enable_youmusicpip }}" = "false" ] && \
-             [ "${{ inputs.enable_ytmabc }}" = "false" ] && \
-             [ "${{ inputs.enable_lastfm }}" = "false" ]; then
-            
-            echo "TAG_PREFIX=YTMU" >> $GITHUB_ENV
-          else
-            echo "TAG_PREFIX=MaxMusic" >> $GITHUB_ENV
-          fi
+      - name: Release tag prefix
+        run: echo "TAG_PREFIX=YTMU" >> $GITHUB_ENV
 
       - name: Create Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ env.TAG_PREFIX }}_${{ env.YTM_VERSION }}_2.4.1_(${{ github.run_number }})
-          name: ${{ env.RELEASE_PREFIX }} 2.4.1 and ${{ env.YTM_VERSION }} 
-          files: ${{ env.RELEASE_PREFIX }}_2.4.1_${{ env.YTM_VERSION }}.ipa
+          tag_name: ${{ env.TAG_PREFIX }}_${{ env.YTM_VERSION }}_2.4.1${{ env.WG_SUFFIX }}_(${{ github.run_number }})
+          name: ${{ env.RELEASE_PREFIX }} 2.4.1 and ${{ env.YTM_VERSION }}${{ env.WG_SUFFIX }}
+          files: ${{ env.RELEASE_PREFIX }}_2.4.1_${{ env.YTM_VERSION }}${{ env.WG_SUFFIX }}.ipa
           draft: true
 
       - name: Output Release URL

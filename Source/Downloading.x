@@ -1123,7 +1123,7 @@ static NSArray<NSDictionary *> *extractPlaylistTracks(NSString *playlistId) {
         sheetController.sourceView = tapView;
         [sheetController addHeaderWithTitle:LOC(@"SELECT_ACTION") subtitle:nil];
 
-        [sheetController addAction:[%c(YTActionSheetAction) actionWithTitle:@"Download All Playlist Tracks" iconImage:[%c(YTUIResources) downloadOutline] style:0 handler:^ {
+        [sheetController addAction:[%c(YTActionSheetAction) actionWithTitle:LOCF(@"PL_DOWNLOAD_ALL", @"Download All Playlist Tracks") iconImage:[%c(YTUIResources) downloadOutline] style:0 handler:^ {
             [self downloadPlaylistTracks:(id)tapView context:playlistELMContext];
         }]];
 
@@ -1187,7 +1187,7 @@ static NSArray<NSDictionary *> *extractPlaylistTracks(NSString *playlistId) {
         return;
     }
 
-    UIAlertController *choiceController = [UIAlertController alertControllerWithTitle:@"Download All Playlist Tracks"
+    UIAlertController *choiceController = [UIAlertController alertControllerWithTitle:LOCF(@"PL_DOWNLOAD_ALL", @"Download All Playlist Tracks")
                                                                                message:@"How would you like to save this playlist?"
                                                                         preferredStyle:UIAlertControllerStyleActionSheet];
 
@@ -1244,7 +1244,7 @@ static NSArray<NSDictionary *> *extractPlaylistTracks(NSString *playlistId) {
 
     if (!isValidPlaylistBrowseID(playlistId)) {
         YTAlertView *alertView = [%c(YTAlertView) infoDialog];
-        alertView.title = @"Playlist Not Found";
+        alertView.title = LOCF(@"PL_NOT_FOUND", @"Playlist Not Found");
         alertView.subtitle = @"Could not find this playlist's ID. No tracks were downloaded.";
         [alertView show];
         return;
@@ -1252,7 +1252,7 @@ static NSArray<NSDictionary *> *extractPlaylistTracks(NSString *playlistId) {
 
     MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
     hud.mode = MBProgressHUDModeIndeterminate;
-    hud.label.text = @"Fetching playlist tracks...";
+    hud.label.text = LOCF(@"PL_FETCHING", @"Fetching playlist tracks...");
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSArray<NSDictionary *> *tracks = extractPlaylistTracks(playlistId);
@@ -1262,7 +1262,7 @@ static NSArray<NSDictionary *> *extractPlaylistTracks(NSString *playlistId) {
                 [hud hideAnimated:YES];
 
                 YTAlertView *alertView = [%c(YTAlertView) infoDialog];
-                alertView.title = @"Playlist Not Found";
+                alertView.title = LOCF(@"PL_NOT_FOUND", @"Playlist Not Found");
                 alertView.subtitle = @"YouTube Music returned no tracks for this playlist. No current or suggested track was downloaded.";
                 [alertView show];
             });
@@ -1295,9 +1295,9 @@ static NSArray<NSDictionary *> *extractPlaylistTracks(NSString *playlistId) {
 
             NSUInteger currentCount = count;
             dispatch_async(dispatch_get_main_queue(), ^{
-                hud.label.text = [NSString stringWithFormat:@"Downloading (%lu/%lu): %@",
+                hud.label.text = [NSString stringWithFormat:LOCF(@"PL_HUD_PROGRESS", @"Downloading (%lu/%lu): %@"),
                                  (unsigned long)currentCount, (unsigned long)tracks.count,
-                                 tTitle ?: @"Track"];
+                                 tTitle ?: LOCF(@"TRACK", @"Track")];
             });
 
             dispatch_semaphore_t sema = dispatch_semaphore_create(0);
@@ -1318,7 +1318,7 @@ static NSArray<NSDictionary *> *extractPlaylistTracks(NSString *playlistId) {
             [hud hideAnimated:YES];
 
             YTAlertView *alertView = [%c(YTAlertView) infoDialog];
-            alertView.title = @"Playlist Download Complete";
+            alertView.title = LOCF(@"PL_DL_COMPLETE", @"Playlist Download Complete");
             if (failCount == 0) {
                 if (saveAsCustomOfflinePlaylist) {
                     alertView.subtitle = [NSString stringWithFormat:@"Successfully saved %lu tracks to the custom offline playlist '%@'.",
@@ -1329,11 +1329,11 @@ static NSArray<NSDictionary *> *extractPlaylistTracks(NSString *playlistId) {
             } else if (saveAsCustomOfflinePlaylist) {
                 alertView.subtitle = [NSString stringWithFormat:@"Saved %lu tracks to '%@'. %lu failed. Last error: %@",
                                       (unsigned long)successCount, playlistName,
-                                      (unsigned long)failCount, lastError ?: @"Unknown"];
+                                      (unsigned long)failCount, lastError ?: LOCF(@"UNKNOWN", @"Unknown")];
             } else {
                 alertView.subtitle = [NSString stringWithFormat:@"Downloaded %lu songs separately. %lu failed. Last error: %@",
                                       (unsigned long)successCount, (unsigned long)failCount,
-                                      lastError ?: @"Unknown"];
+                                      lastError ?: LOCF(@"UNKNOWN", @"Unknown")];
             }
             [alertView show];
 
@@ -1357,7 +1357,7 @@ static NSArray<NSDictionary *> *extractPlaylistTracks(NSString *playlistId) {
             NSURL *logURL = [folderURL URLByAppendingPathComponent:@"error_log.txt"];
             [logMsg writeToURL:logURL atomically:YES encoding:NSUTF8StringEncoding error:nil];
             
-            if (completion) completion(NO, @"Audio URL not found (possibly region blocked or requires signature)");
+            if (completion) completion(NO, LOCF(@"DL_AUDIO_URL_NOT_FOUND", @"Audio URL not found (possibly region blocked or requires signature)"));
             return;
         }
         
@@ -1393,7 +1393,7 @@ static NSArray<NSDictionary *> *extractPlaylistTracks(NSString *playlistId) {
             NSString *logMsg = [NSString stringWithFormat:@"Failed for video %@: Manifest returned nil URL.\n", videoId];
             NSURL *logURL = [folderURL URLByAppendingPathComponent:@"error_log.txt"];
             [logMsg writeToURL:logURL atomically:YES encoding:NSUTF8StringEncoding error:nil];
-            if (completion) completion(NO, @"Invalid manifest URL");
+            if (completion) completion(NO, LOCF(@"DL_INVALID_MANIFEST", @"Invalid manifest URL"));
             return;
         }
         
@@ -1448,7 +1448,7 @@ static NSArray<NSDictionary *> *extractPlaylistTracks(NSString *playlistId) {
             });
             if (completion) completion(YES, nil);
         } else {
-            if (completion) completion(NO, @"FFMpeg failed or file could not be saved");
+            if (completion) completion(NO, LOCF(@"DL_FFMPEG_FAILED", @"FFMpeg failed or file could not be saved"));
         }
     });
 }

@@ -111,6 +111,13 @@ static NSString *accessGroupID() {
 
 %hook NSFileManager
 - (NSURL *)containerURLForSecurityApplicationGroupIdentifier:(NSString *)groupIdentifier {
+    // Keep a real shared container when the app has a matching App Group
+    // entitlement. Widgets run in a separate process and cannot read the
+    // app's Documents directory used by the fallback below.
+    NSURL *sharedURL = %orig(groupIdentifier);
+    if (sharedURL != nil) {
+        return sharedURL;
+    }
     if (groupIdentifier != nil) {
         NSArray *paths = [[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask];
         NSURL *documentsURL = [paths lastObject];

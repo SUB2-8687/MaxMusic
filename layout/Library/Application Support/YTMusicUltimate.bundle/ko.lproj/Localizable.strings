@@ -1,0 +1,166 @@
+"SETTINGS" = "설정";
+"ENABLED" = "YTMusicUltimate 활성화";
+"ENABLED_DESC" = "프리미엄 기능, 광고 제거, 백그라운드 재생 등.";
+"RESTART_FOOTER" = "변경 사항을 적용하려면 앱을 다시 시작하세요.";
+
+"PREMIUM_SETTINGS" = "프리미엄 옵션";
+"NO_ADS" = "광고 제거";
+"NO_ADS_DESC" = "앱 내 광고를 제거합니다.";
+"BACKGROUND_PLAYBACK" = "백그라운드 재생";
+"BACKGROUND_PLAYBACK_DESC" = "백그라운드 재생을 활성화합니다.";
+"FORCE_PREMIUM" = "프리미엄 강제 활성화";
+"FORCE_PREMIUM_DESC" = "프리미엄 기능을 강제로 활성화합니다.\n이 옵션을 사용하면 샘플 탭이 비활성화됩니다.";
+
+"PLAYER_SETTINGS" = "플레이어 옵션";
+"DOWNLOAD_AUDIO" = "오디오 다운로드";
+"DOWNLOAD_AUDIO_DESC" = "플레이어의 YTMUltimate 버튼을 눌러 오디오 다운로드 옵션을 추가합니다.";
+"DOWNLOAD_COVER" = "커버 이미지 다운로드";
+"DOWNLOAD_COVER_DESC" = "플레이어의 YTMUltimate 버튼을 눌러 커버 이미지 다운로드 옵션을 추가합니다.";
+"PLAYBACK_RATE_BUTTON" = "재생 속도 버튼 표시";
+"PLAYBACK_RATE_BUTTON_DESC" = "재생 속도를 조절합니다.";
+"SELECTABLE_LYRICS" = "가사 텍스트 선택";
+"SELECTABLE_LYRICS_DESC" = "가사 텍스트 선택을 활성화합니다.";
+"VOLBAR" = "볼륨 바";
+"VOLBAR_DESC" = "플레이어에 볼륨 바를 추가합니다.";
+"NO_AUTORADIO" = "라디오 비활성화";
+"NO_AUTORADIO_DESC" = "무한 재생 기능을 비활성화합니다.";
+"SKIP_CONTENT_WARNING" = "콘텐츠 경고 건너뛰기";
+"SKIP_CONTENT_WARNING_DESC" = "유해할 수 있는 콘텐츠에 대한 경고를 건너뜁니다.";
+"AV_DEFAULT_MODE" = "기본 재생 모드";
+"AUDIO" = "오디오";
+"VIDEO" = "동영상";
+
+"SKIP_NONMUSIC_PARTS" = "SponsorBlock";
+"SKIP_NONMUSIC_PARTS_DESC" = "뮤직 비디오의 음악 외 구간을 건너뜁니다.";
+"SB_BEHAVIOR" = "동작 방식";
+"SB_SKIP" = "자동 건너뛰기";
+"SB_ASK" = "건너뛸지 묻기";
+"SB_NOTIF_DURATION" = "알림 표시 시간(초)";
+
+"SEEK_BUTTONS" = "다음/이전 버튼을 앞으로/뒤로 탐색 버튼으로 교체";
+"SEEK_TIME_FOOTER" = "탐색 시간을 초 단위로 선택하세요.\n\n기본값:\n뒤로 탐색 = 10초\n앞으로 탐색 = 30초\n\n버튼을 길게 누르면 다음 및 이전 트랙으로 이동할 수 있습니다.";
+"DEFAULT" = "기본값";
+
+"THEME_SETTINGS" = "테마 옵션";
+"OLED_DARK_THEME" = "OLED 다크 테마";
+"OLED_DARK_THEME_DESC" = "OLED 다크 테마를 활성화합니다.";
+"OLED_DARK_KEYBOARD" = "OLED 다크 키보드";
+"OLED_DARK_KEYBOARD_DESC" = "OLED 다크 키보드를 활성화합니다.";
+"LOW_CONTRAST" = "낮은 대비";
+"LOW_CONTRAST_DESC" = "텍스트 및 버튼의 대비를 낮춥니다.";
+
+"NAVBAR_SETTINGS" = "내비게이션 바 옵션";
+"DONT_STICK_HEADERS" = "헤더 고정 해제";
+"DONT_STICK_HEADERS_DESC" = "화면 상단에 고정된 패널의 고정을 해제합니다.";
+"HIDE_HISTORY_BUTTON" = "기록 버튼 숨기기";
+"HIDE_HISTORY_BUTTON_DESC" = "내비게이션 바의 기록 버튼을 숨깁니다.";
+"HIDE_CAST_BUTTON" = "전송(Cast) 버튼 숨기기";
+"HIDE_CAST_BUTTON_DESC" = "내비게이션 바의 전송(Cast) 버튼을 숨깁니다.";
+"HIDE_FILTER_BUTTON" = "정렬 필터 버튼 제거";
+"HIDE_FILTER_BUTTON_DESC" = "내비게이션 바에서 보관함/다운로드 필터 버튼을 제거합니다.";
+
+"TABBAR_SETTINGS" = "탭 바 옵션";
+"STARTUP_TAB" = "시작 탭";
+"HOME" = "홈";
+"SAMPLES" = "샘플";
+"EXPLORE" = "둘러보기";
+"LIBRARY" = "보관함";
+"DOWNLOADS" = "다운로드";
+
+"TAB_SETTINGS" = "탭 설정";
+"REMOVE_TABBAR_LABELS" = "탭 이름 숨기기";
+"HIDE_HOME" = "홈 탭 숨기기";
+"HIDE_SAMPLES" = "샘플 탭 숨기기";
+"HIDE_EXPLORE" = "둘러보기 탭 숨기기";
+"HIDE_LIBRARY" = "보관함 탭 숨기기";
+"HIDE_DOWNLOADS" = "다운로드 탭 숨기기";
+
+"CLEAR_CACHE" = "캐시 삭제";
+
+"APPLY" = "적용";
+"APPLY_DESC" = "변경 사항을 적용하기 위해 앱을 종료합니다.";
+
+"LINKS" = "링크";
+"TWITTER" = "Twitter에서 %@ 팔로우";
+"TWITTER_DESC" = "업데이트 소식을 받아 보세요.";
+"DISCORD" = "Discord 참여하기";
+"DISCORD_DESC" = "버그를 신고하고 기능을 요청하세요.";
+"SOURCE_CODE" = "소스 코드";
+"SOURCE_CODE_DESC" = "코드를 확인해 보세요.";
+
+"CLOSE" = "닫기";
+"WARNING" = "경고";
+"LOGIN_INFO" = "Google 계정 로그인 후 앱을 다시 시작해야 합니다.";
+"RETRY_LOGIN" = "우회 방법이 활성화되었습니다.\n\n다시 시도해 주세요.";
+"APPLY_MESSAGE" = "변경 사항을 적용하기 위해 YouTube Music을 종료합니다. 계속하시겠습니까?";
+"CANCEL" = "취소";
+"YES" = "확인";
+"REGIONAL_RESTRICTION" = "YouTube Music이 현재 국가에서 제한된 것 같습니다.\n\nVPN을 사용하여 YouTube Music에 접속해 주세요.";
+
+"DONT_RUSH" = "잠시만 기다려 주세요.";
+"DONT_RUSH_DESC" = "링크 추출을 위해 곡을 재생해야 합니다.";
+"SELECT_ACTION" = "작업 선택";
+"DOWNLOAD_PREMIUM" = "다운로드(프리미엄 필요)";
+"DOWNLOADING" = "다운로드 중";
+"OOPS" = "이런\n오류가 발생했습니다.";
+"LINK_NOT_FOUND" = "링크를 찾을 수 없습니다.";
+"SAVED_TO_PHOTOS" = "사진에 저장되었습니다.";
+"DONE" = "완료";
+"FOUND_SEGMENT" = "음악 외 구간을 발견했습니다.";
+"SEGMENT_SKIPPED" = "음악 외 구간을 건너뛰었습니다.";
+"SKIP" = "건너뛰기";
+"UNSKIP" = "건너뛰기 취소";
+
+"EMPTY" = "다운로드한 콘텐츠가 여기에 표시됩니다.";
+"REMOVE_ALL" = "오디오 전체 삭제";
+"SHARE_ALL" = "오디오 전체 공유";
+"PREPARING" = "준비 중...";
+"DELETE_MESSAGE" = "%@을(를) 삭제하시겠습니까?";
+"ALL_DOWNLOADS" = "다운로드한 오디오 전체";
+"DELETE" = "삭제";
+"RENAME" = "이름 변경";
+
+/* Downloads / offline player / playlist download */
+"A11Y_DELETE_SELECTED" = "선택한 다운로드 삭제";
+"A11Y_SELECT_TO_DELETE" = "삭제할 다운로드 선택";
+"ADDED_TO_PLAYLIST" = "재생목록에 추가됨";
+"ADDED_TO_PLAYLIST_MSG" = "'%@'을(를) '%@'에 추가했습니다";
+"ADD_TO_PLAYLIST" = "재생목록에 추가";
+"ALL_TRACKS" = "전체 트랙";
+"ARTIST" = "아티스트";
+"CREATE" = "만들기";
+"CREATE_NEW_PLAYLIST" = "+ 새 재생목록 만들기";
+"DELETE_ALL" = "모든 다운로드 삭제";
+"DELETE_ALL_MESSAGE" = "다운로드한 파일을 모두 삭제할까요?";
+"DELETE_ALL_TITLE" = "모두 삭제";
+"DELETE_FILE" = "파일 삭제";
+"DELETE_PLAYLIST" = "재생목록 삭제";
+"DL_AUDIO_URL_NOT_FOUND" = "오디오 URL을 찾을 수 없습니다 (지역 차단되었거나 서명이 필요할 수 있습니다)";
+"DL_FFMPEG_FAILED" = "FFmpeg 변환에 실패했거나 파일을 저장할 수 없습니다";
+"DL_INVALID_MANIFEST" = "잘못된 매니페스트 URL입니다";
+"NEW_PLAYLIST" = "새 재생목록";
+"NEW_PLAYLIST_PROMPT" = "새 재생목록의 이름을 입력하세요:";
+"NOW_PLAYING" = "재생 중";
+"NOW_PLAYING_BADGE" = "▶ 재생 중 • %@";
+"NO_SONGS_SELECTED" = "선택된 곡이 없습니다";
+"OFFLINE_TRACK" = "오프라인 트랙";
+"OK" = "확인";
+"PLAYLISTS" = "재생목록";
+"PLAYLIST_NAME" = "재생목록 이름";
+"PLAY_PLAYLIST" = "재생목록 재생";
+"PL_DL_COMPLETE" = "재생목록 다운로드 완료";
+"PL_DOWNLOAD_ALL" = "재생목록의 모든 트랙 다운로드";
+"PL_FETCHING" = "재생목록 트랙을 불러오는 중...";
+"PL_HUD_DOWNLOADING" = "재생목록 다운로드 중 (%lu곡)...";
+"PL_HUD_PROGRESS" = "다운로드 중 (%lu/%lu): %@";
+"PL_NOT_FOUND" = "재생목록을 찾을 수 없습니다";
+"PL_RESULT_OK" = "'%2$@'에 %1$lu곡을 다운로드했습니다";
+"PL_RESULT_PARTIAL" = "%1$lu곡을 다운로드했습니다. %2$lu곡 실패. 마지막 오류: %3$@";
+"PL_TRACKS_NOT_FOUND" = "이 재생목록에서 트랙을 찾지 못했습니다. 현재 곡은 다운로드되지 않았습니다.";
+"SELECT_SONG_TO_DELETE" = "삭제할 곡을 하나 이상 선택하세요.";
+"SHOW_ALL_DOWNLOADS" = "모든 다운로드 보기";
+"SHUFFLE_PLAYLIST" = "재생목록 셔플";
+"TRACK" = "트랙";
+"UNKNOWN" = "알 수 없음";
+"UP_NEXT" = "다음 재생";
+"VIEW_TRACKS" = "트랙 보기";

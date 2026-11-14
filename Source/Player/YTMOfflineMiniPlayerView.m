@@ -1,5 +1,6 @@
 #import "YTMOfflineMiniPlayerView.h"
 #import "YTMOfflinePlayerManager.h"
+#import "../Headers/Localization.h"
 
 @interface YTMOfflineMiniPlayerView ()
 @property (nonatomic, strong) UIImageView *artworkImageView;
@@ -129,8 +130,8 @@
         
         if (manager.currentFileName.length > 0 || manager.currentTitle.length > 0) {
             self.hidden = NO;
-            self.titleLabel.text = manager.currentTitle ?: @"Offline Track";
-            self.artistLabel.text = manager.currentArtist ?: @"Artist";
+            self.titleLabel.text = manager.currentTitle ?: LOCF(@"OFFLINE_TRACK", @"Offline Track");
+            self.artistLabel.text = manager.currentArtist ?: LOCF(@"ARTIST", @"Artist");
             self.artworkImageView.image = manager.currentArtwork ?: [UIImage systemImageNamed:@"music.note"];
             
             NSString *iconName = manager.isPlaying ? @"pause.fill" : @"play.fill";

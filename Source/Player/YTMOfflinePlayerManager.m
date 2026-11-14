@@ -1,5 +1,6 @@
 #import "YTMOfflinePlayerManager.h"
 #import <AVFoundation/AVFoundation.h>
+#import "../Headers/Localization.h"
 
 NSString * const YTMOfflinePlayerStateDidChangeNotification = @"YTMOfflinePlayerStateDidChangeNotification";
 NSString * const YTMOfflinePlayerTrackDidChangeNotification = @"YTMOfflinePlayerTrackDidChangeNotification";
@@ -367,7 +368,7 @@ BOOL gIsOfflineUpdatingNowPlayingInfo = NO;
         self.currentTitle = [[components subarrayWithRange:NSMakeRange(1, components.count - 1)] componentsJoinedByString:@" - "];
     } else {
         self.currentTitle = cleanName;
-        self.currentArtist = @"Offline Track";
+        self.currentArtist = LOCF(@"OFFLINE_TRACK", @"Offline Track");
     }
     
     self.currentArtwork = [self artworkForAudioName:fileName];

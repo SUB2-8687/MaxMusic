@@ -1,0 +1,253 @@
+diff --git a/headers/LFMLocalization.h b/headers/LFMLocalization.h
+new file mode 100644
+index 0000000..eb31c32
+--- /dev/null
++++ b/headers/LFMLocalization.h
+@@ -0,0 +1,6 @@
++#import <Foundation/Foundation.h>
++
++static inline NSString *LFMText(NSString *english, NSString *korean) {
++    NSString *language = [NSBundle mainBundle].preferredLocalizations.firstObject ?: [NSLocale preferredLanguages].firstObject;
++    return [language hasPrefix:@"ko"] ? korean : english;
++}
+diff --git a/sources/Client.xm b/sources/Client.xm
+index 5ee2423..999de65 100644
+--- a/sources/Client.xm
++++ b/sources/Client.xm
+@@ -1,4 +1,5 @@
+ #import "../headers/Client.h"
++#import "../headers/LFMLocalization.h"
+ #import <SafariServices/SafariServices.h>
+ 
+ static NSString* const LFMBaseURL = @"https://ws.audioscrobbler.com/2.0";
+@@ -155,15 +156,15 @@ static NSString* const LFMBaseURL = @"https://ws.audioscrobbler.com/2.0";
+ 				NSLog(@"Faced an error while getting token: %@", json[@"message"]);
+ 
+ 				YTAlertView *alertView = [%c(YTAlertView) infoDialog];
+-				alertView.title = @"Warning";
+-				alertView.subtitle = [NSString stringWithFormat: @"Failed to get last.fm token: %@", json[@"message"]];
++				alertView.title = LFMText(@"Warning", @"오류");
++				alertView.subtitle = [NSString stringWithFormat:LFMText(@"Failed to get last.fm token: %@", @"Last.fm 인증 토큰을 가져오지 못했습니다: %@"), json[@"message"]];
+ 				[alertView show];
+ 
+ 				return nil;
+ 			}
+ 
+ 			[[NSUserDefaults standardUserDefaults] setObject:json[@"token"] forKey:@"lfmToken"];
+-			NSLog(@"Token fetched: %@", json[@"token"]);
++			NSLog(@"Last.fm token fetched");
+ 
+ 			[LFMClient authorize];
+ 
+@@ -237,8 +238,8 @@ static NSString* const LFMBaseURL = @"https://ws.audioscrobbler.com/2.0";
+ 				NSLog(@"Faced an error while getting session: %@", json[@"message"]);
+ 
+ 				YTAlertView *alertView = [%c(YTAlertView) infoDialog];
+-				alertView.title = @"Warning";
+-				alertView.subtitle = [NSString stringWithFormat: @"Failed to create last.fm session: %@", json[@"message"]];
++				alertView.title = LFMText(@"Warning", @"오류");
++				alertView.subtitle = [NSString stringWithFormat:LFMText(@"Failed to create last.fm session: %@", @"Last.fm 로그인 세션을 만들지 못했습니다: %@"), json[@"message"]];
+ 				[alertView show];
+ 
+ 				[LFMClient createToken];
+@@ -247,7 +248,7 @@ static NSString* const LFMBaseURL = @"https://ws.audioscrobbler.com/2.0";
+ 			}
+ 
+ 			[[NSUserDefaults standardUserDefaults] setObject:json[@"session"][@"key"] forKey:@"lfmSessionKey"];
+-			NSLog(@"Session key fetched: %@", json[@"session"][@"key"]);
++			NSLog(@"Last.fm session key fetched");
+ 
+ 			return json[@"session"][@"key"];
+ 		}
+@@ -279,4 +280,4 @@ static NSString* const LFMBaseURL = @"https://ws.audioscrobbler.com/2.0";
+ 		return [ms copy];
+ 	}
+ 	#pragma clang diagnostic pop
+-@end
+\ No newline at end of file
++@end
+diff --git a/sources/Main.xm b/sources/Main.xm
+index 58fbb9c..0d5cc02 100644
+--- a/sources/Main.xm
++++ b/sources/Main.xm
+@@ -1,4 +1,5 @@
+ #import "../headers/Main.h"
++#import "../headers/LFMLocalization.h"
+ 
+ %hook YTMContentViewController
+ 
+@@ -14,8 +15,8 @@
+ 			NSLog(@"Faced an issue while getting signature: %@", error.localizedDescription);
+ 
+ 			YTAlertView *alertView = [%c(YTAlertView) infoDialog];
+-			alertView.title = @"Warning";
+-			alertView.subtitle = [NSString stringWithFormat: @"Faced an issue while getting signature: %@", error.localizedDescription];
++			alertView.title = LFMText(@"Warning", @"오류");
++			alertView.subtitle = [NSString stringWithFormat:LFMText(@"Faced an issue while getting signature: %@", @"인증 정보를 가져오지 못했습니다: %@"), error.localizedDescription];
+ 			[alertView show];
+ 		}
+ 	};
+@@ -115,4 +116,4 @@
+ 	[LFMScrobbler poll];
+ };
+ 
+-%end
+\ No newline at end of file
++%end
+diff --git a/sources/Settings.xm b/sources/Settings.xm
+index 8dff0d1..7c8c9ae 100644
+--- a/sources/Settings.xm
++++ b/sources/Settings.xm
+@@ -1,4 +1,5 @@
+ #import <UIKit/UIKit.h>
++#import "../headers/LFMLocalization.h"
+ 
+ @interface YTMAccountButton : UIButton
+ - (id)initWithTitle:(id)arg1 identifier:(id)arg2 icon:(id)arg3 actionBlock:(void (^)(BOOL finished))arg4;
+@@ -21,7 +22,7 @@
+ 
+ - (void)viewDidLoad {
+     [super viewDidLoad];
+-    self.title = @"Regex filters";
++    self.title = LFMText(@"Regex filters", @"정규식 필터");
+     _prefs = [NSUserDefaults standardUserDefaults];
+ 
+     NSArray *saved = [_prefs arrayForKey:@"lfm_custom_regexes"];
+@@ -32,12 +33,12 @@
+ }
+ 
+ - (void)addRegex {
+-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"New Regex" message:@"Enter the regular expression" preferredStyle:UIAlertControllerStyleAlert];
++    UIAlertController *alert = [UIAlertController alertControllerWithTitle:LFMText(@"New Regex", @"새 정규식") message:LFMText(@"Enter the regular expression", @"정규식을 입력하세요.") preferredStyle:UIAlertControllerStyleAlert];
+     [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+         textField.placeholder = @"\\s[([]Remastered[)\\]]";
+     }];
+-    [alert addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
+-    [alert addAction:[UIAlertAction actionWithTitle:@"Add" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
++    [alert addAction:[UIAlertAction actionWithTitle:LFMText(@"Cancel", @"취소") style:UIAlertActionStyleCancel handler:nil]];
++    [alert addAction:[UIAlertAction actionWithTitle:LFMText(@"Add", @"추가") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+         NSString *text = alert.textFields.firstObject.text;
+         if (text.length > 0) {
+             [self->_regexes addObject:text];
+@@ -82,10 +83,10 @@
+ 
+ - (void)viewDidLoad {
+     [super viewDidLoad];
+-    self.title = @"Last.fm Scrobbler";
++    self.title = LFMText(@"Last.fm Scrobbler", @"Last.fm 청취 기록");
+     _prefs = [NSUserDefaults standardUserDefaults];
+ 
+-    UIBarButtonItem *closeButton = [[UIBarButtonItem alloc] initWithTitle:@"Close" style:UIBarButtonItemStyleDone target:self action:@selector(closeTapped)];
++    UIBarButtonItem *closeButton = [[UIBarButtonItem alloc] initWithTitle:LFMText(@"Close", @"닫기") style:UIBarButtonItemStyleDone target:self action:@selector(closeTapped)];
+     self.navigationItem.leftBarButtonItem = closeButton;
+ }
+ 
+@@ -98,8 +99,8 @@
+ }
+ 
+ - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+-    if (section == 0) return @"Last.fm Account";
+-    if (section == 1) return @"Filters";
++    if (section == 0) return LFMText(@"Last.fm Account", @"Last.fm 계정");
++    if (section == 1) return LFMText(@"Filters", @"필터");
+     if (section == 2) return @"MusicBrainz";
+     return nil;
+ }
+@@ -119,30 +120,30 @@
+ 
+     if (indexPath.section == 0) {
+         if (indexPath.row == 0) {
+-            cell.textLabel.text = @"Enable Scrobbler";
++            cell.textLabel.text = LFMText(@"Enable Scrobbler", @"청취 기록 자동 저장");
+             UISwitch *toggle = [[UISwitch alloc] init];
+             toggle.on = [_prefs boolForKey:@"lfm_scrobbler_enabled"];
+             [toggle addTarget:self action:@selector(scrobblerSwitchToggled:) forControlEvents:UIControlEventValueChanged];
+             cell.accessoryView = toggle;
+             cell.selectionStyle = UITableViewCellSelectionStyleNone;
+         } else if (indexPath.row == 1) {
+-            cell.textLabel.text = @"Clear session";
++            cell.textLabel.text = LFMText(@"Clear session", @"로그인 정보 지우기");
+             cell.textLabel.textColor = [UIColor systemRedColor];
+         }
+     } else if (indexPath.section == 1) {
+-        cell.textLabel.text = @"Regex filters";
++        cell.textLabel.text = LFMText(@"Regex filters", @"정규식 필터");
+         cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+     } else if (indexPath.section == 2) {
+         if (indexPath.row == 0) {
+-            cell.textLabel.text = @"Enable MusicBrainz integration";
++            cell.textLabel.text = LFMText(@"Enable MusicBrainz integration", @"MusicBrainz로 곡 정보 보정");
+             UISwitch *toggle = [[UISwitch alloc] init];
+             toggle.on = [_prefs boolForKey:@"lfm_musicbrainz_enabled"];
+             [toggle addTarget:self action:@selector(mbSwitchToggled:) forControlEvents:UIControlEventValueChanged];
+             cell.accessoryView = toggle;
+             cell.selectionStyle = UITableViewCellSelectionStyleNone;
+         } else if (indexPath.row == 1) {
+-            cell.textLabel.text = @"Email for MusicBrainz";
+-            cell.detailTextLabel.text = [_prefs stringForKey:@"lfm_musicbrainz_email"] ?: @"None";
++            cell.textLabel.text = LFMText(@"Email for MusicBrainz", @"MusicBrainz 이메일");
++            cell.detailTextLabel.text = [_prefs stringForKey:@"lfm_musicbrainz_email"] ?: LFMText(@"None", @"없음");
+             cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+         }
+     }
+@@ -162,8 +163,8 @@
+         [_prefs removeObjectForKey:@"lfmToken"];
+         [_prefs synchronize];
+ 
+-        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Session Cleared" message:@"Please restart the app to log in again." preferredStyle:UIAlertControllerStyleAlert];
+-        [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
++        UIAlertController *alert = [UIAlertController alertControllerWithTitle:LFMText(@"Session Cleared", @"로그인 정보 삭제됨") message:LFMText(@"Please restart the app to log in again.", @"다시 로그인하려면 앱을 재시작하세요.") preferredStyle:UIAlertControllerStyleAlert];
++        [alert addAction:[UIAlertAction actionWithTitle:LFMText(@"OK", @"확인") style:UIAlertActionStyleDefault handler:nil]];
+         [self presentViewController:alert animated:YES completion:nil];
+     } else if (indexPath.section == 1) {
+         LFMRegularExpressionsViewController *vc = [[LFMRegularExpressionsViewController alloc] init];
+@@ -191,17 +192,17 @@
+ }
+ 
+ - (void)promptForEmailWithSwitch:(UISwitch *)toggle {
+-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"MusicBrainz Email" message:@"An email is required to use MusicBrainz integration." preferredStyle:UIAlertControllerStyleAlert];
++    UIAlertController *alert = [UIAlertController alertControllerWithTitle:LFMText(@"MusicBrainz Email", @"MusicBrainz 이메일") message:LFMText(@"An email is required to use MusicBrainz integration.", @"MusicBrainz 연동에는 이메일이 필요합니다.") preferredStyle:UIAlertControllerStyleAlert];
+     [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+         textField.placeholder = @"email@example.com";
+         textField.keyboardType = UIKeyboardTypeEmailAddress;
+     }];
+ 
+-    [alert addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
++    [alert addAction:[UIAlertAction actionWithTitle:LFMText(@"Cancel", @"취소") style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+         [toggle setOn:NO animated:YES];
+     }]];
+ 
+-    [alert addAction:[UIAlertAction actionWithTitle:@"Save" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
++    [alert addAction:[UIAlertAction actionWithTitle:LFMText(@"Save", @"저장") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+         NSString *email = alert.textFields.firstObject.text;
+         if (email.length > 0) {
+             [self->_prefs setObject:email forKey:@"lfm_musicbrainz_email"];
+@@ -217,16 +218,16 @@
+ }
+ 
+ - (void)promptForEmail {
+-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"MusicBrainz Email" message:@"Update your MusicBrainz email." preferredStyle:UIAlertControllerStyleAlert];
++    UIAlertController *alert = [UIAlertController alertControllerWithTitle:LFMText(@"MusicBrainz Email", @"MusicBrainz 이메일") message:LFMText(@"Update your MusicBrainz email.", @"MusicBrainz에 사용할 이메일을 변경하세요.") preferredStyle:UIAlertControllerStyleAlert];
+     [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+         textField.placeholder = @"email@example.com";
+         textField.keyboardType = UIKeyboardTypeEmailAddress;
+         textField.text = [self->_prefs stringForKey:@"lfm_musicbrainz_email"];
+     }];
+ 
+-    [alert addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
++    [alert addAction:[UIAlertAction actionWithTitle:LFMText(@"Cancel", @"취소") style:UIAlertActionStyleCancel handler:nil]];
+ 
+-    [alert addAction:[UIAlertAction actionWithTitle:@"Save" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
++    [alert addAction:[UIAlertAction actionWithTitle:LFMText(@"Save", @"저장") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+         NSString *email = alert.textFields.firstObject.text;
+         if (email.length > 0) {
+             [self->_prefs setObject:email forKey:@"lfm_musicbrainz_email"];
+@@ -245,7 +246,7 @@
+ - (void)setAccountMenuUpperButtons:(id)arg1 lowerButtons:(id)arg2 {
+     UIImage *icon = [UIImage systemImageNamed:@"music.note.list"];
+ 
+-    YTMAccountButton *button = [[%c(YTMAccountButton) alloc] initWithTitle:@"Last.fm Scrobbler" identifier:@"lfm_scrobbler" icon:icon actionBlock:^(BOOL finished) {
++    YTMAccountButton *button = [[%c(YTMAccountButton) alloc] initWithTitle:LFMText(@"Last.fm Scrobbler", @"Last.fm 청취 기록") identifier:@"lfm_scrobbler" icon:icon actionBlock:^(BOOL finished) {
+         LFMSettingsViewController *settingsVC = [[LFMSettingsViewController alloc] initWithStyle:UITableViewStyleGrouped];
+         UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:settingsVC];
+         [nav setModalPresentationStyle:UIModalPresentationFormSheet];

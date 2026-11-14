@@ -1,0 +1,20 @@
+diff --git a/Tweak.x b/Tweak.x
+index a2693d1..3c5b7ab 100644
+--- a/Tweak.x
++++ b/Tweak.x
+@@ -300,7 +300,14 @@ static void getVoteAndModifyButtons(
+ - (ELMCellNode *)nodeForItemAtIndexPath:(NSIndexPath *)indexPath {
+     ELMCellNode *node = %orig;
+     if (isVideoScrollableActionBar(self) && TweakEnabled()) {
+-        _ASCollectionViewCell *likeDislikeCell = [self.subviews firstObject];
++        _ASCollectionViewCell *likeDislikeCell = nil;
++        for (UIView *subview in self.subviews) {
++            if ([subview isKindOfClass:%c(_ASCollectionViewCell)]) {
++                likeDislikeCell = (_ASCollectionViewCell *)subview;
++                break;
++            }
++        }
++        if (!likeDislikeCell) return node;
+         ASDisplayNode *containerNode = [likeDislikeCell node];
+         NSString *videoId = getVideoId(containerNode);
+         if (videoId == nil) return node;

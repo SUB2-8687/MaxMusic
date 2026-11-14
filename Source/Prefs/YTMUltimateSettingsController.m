@@ -77,7 +77,8 @@
         case 0:
             return 1;
         case 1:
-            return 5;
+            // Extra row only when the tweak was built with WIREGUARD=1.
+            return 5 + (NSClassFromString(@"YTMUWGSettingsController") ? 1 : 0);
         case 2:
             return 1;
         case 3:
@@ -129,6 +130,11 @@
             @{@"title": LOC(@"NAVBAR_SETTINGS"), @"image": @"sidebar.trailing"},
             @{@"title": LOC(@"TABBAR_SETTINGS"), @"image": @"dock.rectangle"}
         ];
+        if (NSClassFromString(@"YTMUWGSettingsController")) {
+            settingsData = [settingsData arrayByAddingObject:@{
+                @"title": [NSBundle.ytmu_defaultBundle localizedStringForKey:@"WG_TITLE" value:@"In-app WireGuard / Proxy" table:@"WireGuard"],
+                @"image": @"lock.shield"}];
+        }
 
         NSDictionary *settingData = settingsData[indexPath.row];
 
@@ -219,6 +225,9 @@
 
         if (indexPath.row >= 0 && indexPath.row < controllers.count) {
             UIViewController *controller = [[controllers[indexPath.row] alloc] init];
+            [self.navigationController pushViewController:controller animated:YES];
+        } else if (indexPath.row == (NSInteger)controllers.count && NSClassFromString(@"YTMUWGSettingsController")) {
+            UIViewController *controller = [[NSClassFromString(@"YTMUWGSettingsController") alloc] init];
             [self.navigationController pushViewController:controller animated:YES];
         }
     }

@@ -22,7 +22,7 @@
     [self.view addSubview:self.tableView];
 
     // Segmented control for All Tracks vs Playlists
-    self.segmentedControl = [[UISegmentedControl alloc] initWithItems:@[@"All Tracks", @"Playlists"]];
+    self.segmentedControl = [[UISegmentedControl alloc] initWithItems:@[LOCF(@"ALL_TRACKS", @"All Tracks"), LOCF(@"PLAYLISTS", @"Playlists")]];
     self.segmentedControl.selectedSegmentIndex = 0;
     // Use a subtle neutral highlight instead of inheriting the app's red tint;
     // leave the native control styling intact for its Liquid Glass appearance.
@@ -117,7 +117,7 @@
     self.deleteSelectionButton.tintColor = [UIColor systemRedColor];
     UIImage *icon = [UIImage systemImageNamed:self.isSelectingAudioFiles ? @"trash.fill" : @"trash"];
     [self.deleteSelectionButton setImage:icon forState:UIControlStateNormal];
-    self.deleteSelectionButton.accessibilityLabel = self.isSelectingAudioFiles ? @"Delete selected downloads" : @"Select downloads to delete";
+    self.deleteSelectionButton.accessibilityLabel = self.isSelectingAudioFiles ? LOCF(@"A11Y_DELETE_SELECTED", @"Delete selected downloads") : LOCF(@"A11Y_SELECT_TO_DELETE", @"Select downloads to delete");
 }
 
 - (void)didTapDeleteSelectionButton {
@@ -132,8 +132,8 @@
     }
 
     if (self.selectedAudioFiles.count == 0) {
-        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"No Songs Selected" message:@"Please select at least one song to delete." preferredStyle:UIAlertControllerStyleAlert];
-        [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:LOCF(@"NO_SONGS_SELECTED", @"No Songs Selected") message:LOCF(@"SELECT_SONG_TO_DELETE", @"Please select at least one song to delete.") preferredStyle:UIAlertControllerStyleAlert];
+        [alert addAction:[UIAlertAction actionWithTitle:LOCF(@"OK", @"OK") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
             self.isSelectingAudioFiles = NO;
             [self.selectedAudioFiles removeAllObjects];
             [self updateDeleteSelectionButton];
@@ -322,7 +322,7 @@
                 cell.detailTextLabel.text = components[0];
             } else {
                 cell.textLabel.text = cleanName;
-                cell.detailTextLabel.text = @"Offline Track";
+                cell.detailTextLabel.text = LOCF(@"OFFLINE_TRACK", @"Offline Track");
             }
 
             UIImage *artwork = [[YTMOfflinePlayerManager sharedManager] artworkForAudioName:fileName];
@@ -338,13 +338,13 @@
 
             if (self.isSelectingAudioFiles) {
                 cell.textLabel.textColor = [UIColor whiteColor];
-                cell.detailTextLabel.text = components.count >= 2 ? components[0] : @"Offline Track";
+                cell.detailTextLabel.text = components.count >= 2 ? components[0] : LOCF(@"OFFLINE_TRACK", @"Offline Track");
                 cell.accessoryView = nil;
                 cell.accessoryType = isSelectedForDeletion ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
                 cell.tintColor = [UIColor systemRedColor];
             } else if (isCurrentPlaying) {
                 cell.textLabel.textColor = [UIColor systemRedColor];
-                cell.detailTextLabel.text = [NSString stringWithFormat:@"▶ NOW PLAYING • %@", cell.detailTextLabel.text ?: @"Offline Track"];
+                cell.detailTextLabel.text = [NSString stringWithFormat:LOCF(@"NOW_PLAYING_BADGE", @"▶ NOW PLAYING • %@"), cell.detailTextLabel.text ?: LOCF(@"OFFLINE_TRACK", @"Offline Track")];
                 UIImageView *playingBadge = [[UIImageView alloc] initWithImage:[UIImage systemImageNamed:@"speaker.wave.3.fill"]];
                 playingBadge.tintColor = [UIColor systemRedColor];
                 playingBadge.frame = CGRectMake(0, 0, 24, 24);
@@ -367,7 +367,7 @@
             cell.imageView.image = nil;
             cell.accessoryView = nil;
             if (self.selectedPlaylistFilter != nil) {
-                cell.textLabel.text = @"Show All Downloads";
+                cell.textLabel.text = LOCF(@"SHOW_ALL_DOWNLOADS", @"Show All Downloads");
                 cell.textLabel.textColor = [UIColor systemBlueColor];
                 cell.detailTextLabel.text = nil;
             } else {
@@ -390,7 +390,7 @@
         // Playlists view
         cell.accessoryView = nil;
         if (indexPath.section == 0) {
-            cell.textLabel.text = @"+ Create New Playlist";
+            cell.textLabel.text = LOCF(@"CREATE_NEW_PLAYLIST", @"+ Create New Playlist");
             cell.textLabel.textColor = [UIColor systemBlueColor];
             cell.detailTextLabel.text = nil;
             cell.imageView.image = [UIImage systemImageNamed:@"plus.circle.fill"];
@@ -526,12 +526,12 @@
 #pragma mark - Playlist Management Helpers
 
 - (void)promptCreatePlaylist {
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"New Playlist" message:@"Enter a name for the new playlist:" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:LOCF(@"NEW_PLAYLIST", @"New Playlist") message:LOCF(@"NEW_PLAYLIST_PROMPT", @"Enter a name for the new playlist:") preferredStyle:UIAlertControllerStyleAlert];
     [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
-        textField.placeholder = @"Playlist Name";
+        textField.placeholder = LOCF(@"PLAYLIST_NAME", @"Playlist Name");
     }];
     
-    UIAlertAction *create = [UIAlertAction actionWithTitle:@"Create" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+    UIAlertAction *create = [UIAlertAction actionWithTitle:LOCF(@"CREATE", @"Create") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
         UITextField *tf = alert.textFields.firstObject;
         NSString *name = [tf.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
         if (name.length > 0) {
@@ -550,9 +550,9 @@
     NSArray *playlists = [YTMDownloadMetadata allPlaylists];
     
     NSString *cleanTitle = [fileName stringByDeletingPathExtension];
-    UIAlertController *sheet = [UIAlertController alertControllerWithTitle:@"Add to Playlist" message:cleanTitle preferredStyle:UIAlertControllerStyleActionSheet];
+    UIAlertController *sheet = [UIAlertController alertControllerWithTitle:LOCF(@"ADD_TO_PLAYLIST", @"Add to Playlist") message:cleanTitle preferredStyle:UIAlertControllerStyleActionSheet];
     
-    [sheet addAction:[UIAlertAction actionWithTitle:@"+ Create New Playlist" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+    [sheet addAction:[UIAlertAction actionWithTitle:LOCF(@"CREATE_NEW_PLAYLIST", @"+ Create New Playlist") style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
         [self promptCreatePlaylist];
     }]];
     
@@ -560,8 +560,8 @@
         [sheet addAction:[UIAlertAction actionWithTitle:pName style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
             [YTMDownloadMetadata addTrack:fileName toPlaylist:pName];
             
-            UIAlertController *toast = [UIAlertController alertControllerWithTitle:@"Added to Playlist" message:[NSString stringWithFormat:@"'%@' added to %@", cleanTitle, pName] preferredStyle:UIAlertControllerStyleAlert];
-            [toast addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
+            UIAlertController *toast = [UIAlertController alertControllerWithTitle:LOCF(@"ADDED_TO_PLAYLIST", @"Added to Playlist") message:[NSString stringWithFormat:LOCF(@"ADDED_TO_PLAYLIST_MSG", @"'%@' added to %@"), cleanTitle, pName] preferredStyle:UIAlertControllerStyleAlert];
+            [toast addAction:[UIAlertAction actionWithTitle:LOCF(@"OK", @"OK") style:UIAlertActionStyleDefault handler:nil]];
             [self presentViewController:toast animated:YES completion:nil];
         }]];
     }
@@ -575,7 +575,7 @@
     
     UIAlertController *sheet = [UIAlertController alertControllerWithTitle:pName message:[NSString stringWithFormat:@"%lu tracks", (unsigned long)tracks.count] preferredStyle:UIAlertControllerStyleActionSheet];
     
-    [sheet addAction:[UIAlertAction actionWithTitle:@"Play Playlist" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+    [sheet addAction:[UIAlertAction actionWithTitle:LOCF(@"PLAY_PLAYLIST", @"Play Playlist") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
         if (tracks.count > 0) {
             [YTMOfflinePlayerManager sharedManager].isShuffleEnabled = NO;
             [[YTMOfflinePlayerManager sharedManager] playPlaylist:tracks startIndex:0];
@@ -587,7 +587,7 @@
         }
     }]];
     
-    [sheet addAction:[UIAlertAction actionWithTitle:@"Shuffle Playlist" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+    [sheet addAction:[UIAlertAction actionWithTitle:LOCF(@"SHUFFLE_PLAYLIST", @"Shuffle Playlist") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
         if (tracks.count > 0) {
             [YTMOfflinePlayerManager sharedManager].isShuffleEnabled = YES;
             [[YTMOfflinePlayerManager sharedManager] playPlaylist:tracks startIndex:0];
@@ -599,14 +599,14 @@
         }
     }]];
     
-    [sheet addAction:[UIAlertAction actionWithTitle:@"View Tracks" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+    [sheet addAction:[UIAlertAction actionWithTitle:LOCF(@"VIEW_TRACKS", @"View Tracks") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
         self.selectedPlaylistFilter = pName;
         self.segmentedControl.selectedSegmentIndex = 0;
         [self refreshAudioFiles];
         [self.tableView reloadData];
     }]];
     
-    [sheet addAction:[UIAlertAction actionWithTitle:@"Delete Playlist" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+    [sheet addAction:[UIAlertAction actionWithTitle:LOCF(@"DELETE_PLAYLIST", @"Delete Playlist") style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
         [YTMDownloadMetadata deletePlaylistNamed:pName];
         [self.tableView reloadData];
     }]];
@@ -648,7 +648,7 @@
         alertView.subtitle = [NSString stringWithFormat:LOC(@"DELETE_MESSAGE"), [fileName stringByDeletingPathExtension]];
         [alertView show];
     } else {
-        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Delete File" message:[fileName stringByDeletingPathExtension] preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:LOCF(@"DELETE_FILE", @"Delete File") message:[fileName stringByDeletingPathExtension] preferredStyle:UIAlertControllerStyleAlert];
         [alert addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL") style:UIAlertActionStyleCancel handler:nil]];
         [alert addAction:[UIAlertAction actionWithTitle:LOC(@"DELETE") style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
             deleteBlock();
@@ -699,7 +699,7 @@
         alertView.subtitle = LOC(@"DELETE_ALL_MESSAGE");
         [alertView show];
     } else {
-        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Delete All" message:@"Are you sure you want to delete all downloaded files?" preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:LOCF(@"DELETE_ALL_TITLE", @"Delete All") message:LOCF(@"DELETE_ALL_MESSAGE", @"Are you sure you want to delete all downloaded files?") preferredStyle:UIAlertControllerStyleAlert];
         [alert addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL") style:UIAlertActionStyleCancel handler:nil]];
         [alert addAction:[UIAlertAction actionWithTitle:LOC(@"DELETE_ALL") style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
             removeAllBlock();

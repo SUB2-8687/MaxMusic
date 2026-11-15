@@ -53,7 +53,7 @@
     // Header title
     self.headerTitleLabel = [[UILabel alloc] init];
     self.headerTitleLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    self.headerTitleLabel.text = LOC(@"NOW_PLAYING") ?: @"NOW PLAYING";
+    self.headerTitleLabel.text = LOC(@"NOW_PLAYING") ?: LOCF(@"NOW_PLAYING", @"NOW PLAYING");
     self.headerTitleLabel.font = [UIFont systemFontOfSize:13 weight:UIFontWeightBold];
     self.headerTitleLabel.textColor = [[UIColor whiteColor] colorWithAlphaComponent:0.6];
     self.headerTitleLabel.textAlignment = NSTextAlignmentCenter;
@@ -160,7 +160,7 @@
     // Queue Section Header
     self.queueHeaderLabel = [[UILabel alloc] init];
     self.queueHeaderLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    self.queueHeaderLabel.text = @"UP NEXT";
+    self.queueHeaderLabel.text = LOCF(@"UP_NEXT", @"UP NEXT");
     self.queueHeaderLabel.font = [UIFont systemFontOfSize:12 weight:UIFontWeightBold];
     self.queueHeaderLabel.textColor = [[UIColor whiteColor] colorWithAlphaComponent:0.5];
     [self.view addSubview:self.queueHeaderLabel];
@@ -354,7 +354,7 @@
     NSString *cleanName = [fileName stringByDeletingPathExtension];
     NSArray *components = [cleanName componentsSeparatedByString:@" - "];
     NSString *title = (components.count >= 2) ? [[components subarrayWithRange:NSMakeRange(1, components.count - 1)] componentsJoinedByString:@" - "] : cleanName;
-    NSString *artist = (components.count >= 2) ? components[0] : @"Offline Track";
+    NSString *artist = (components.count >= 2) ? components[0] : LOCF(@"OFFLINE_TRACK", @"Offline Track");
     
     cell.textLabel.text = title;
     cell.detailTextLabel.text = artist;

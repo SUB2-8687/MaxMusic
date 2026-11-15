@@ -31,6 +31,15 @@ The best fork of <a href="https://github.com/dayanch96/YTMusicUltimate">YTMusicU
 ## Bug reporting
 **In the repo may be some issues, so please report any issue in the [Issues](https://github.com/Mark02-2012/MaxMusic/issues) section.**
 
+## Download table
+FROM 1.2 I'LL NOT UPDATE IT ANYMORE (will remove the files from github soon), JOIN MY TELEGRAM CHANNEL 👉<a href="https://t.me/Mark02workshop_official">HERE</a>👈
+Implemented new fixed deb for working downloads from release 9.23.4 and 2.4.1! (Also in Actions)
+| Release | YTM version | YTMUltimate version | MaxMusic version |
+| :--- | :---: | :---: | :---: |
+| [MaxMusic Latest][YTMU+Latest] | 9.37.2 | 2.4.1 fix | 1.1 |
+| [MaxMusic without YouMusicPiP][YTMU+no-YMP] | 9.37.2 | 2.4.1 fix | 1.1 no YouMusicPiP |
+| [YTMusicUltimate Latest][YTMULatest] | 9.37.2 | 2.4.1 fix | / |
+
 
 ## Download Links
 
@@ -40,7 +49,7 @@ Add __[https://ginsu.dev/repo](https://ginsu.dev/repo)__ to your favorite instal
 (arm.deb version for Rootful and arm64.deb version for Rootless devices)
 
 * **Sideloading:**
-You can find pre-built IPAs in my [Telegram channel](https://t.me/Mark02workshop_official), but can also build one yourself, keep reading:
+You can find pre-built IPAs in the [Download table](#download-table) and the [releases tab](https://github.com/Mark02-2012/YTMusicUltimate/releases), but can also build one yourself, keep reading:
 
 ## How to build a YTMusicUltimate and MaxMusic IPA by yourself using Github actions
 
@@ -52,8 +61,11 @@ You can find pre-built IPAs in my [Telegram channel](https://t.me/Mark02workshop
 1. Fork this repository using the fork button on the top right.
 2. On your forked repository, go to Repository Settings > Actions, enable Read and Write permissions.
 3. Go to the Actions tab on your forked repo, click on "Build and Release YTMusicUltimate and MaxMusic" located on the left side. Click "Run workflow" button located on the right side.
-4. Find a decrypted YTMusic .ipa file (read [this](#how-to-find-decrypted-youtube-music-ipas) if you don't know where to find one) and upload it to a file provider (filebin.net, Dropbox or catbox.moe is recommended; IF YOU USED DROPBOX, YOU HAVE TO CHANGE THE FINAL PART OF THE LINK FROM dl=0 TO dl=1). Paste the url to the necessary field, select the extra tweaks you want and click "Run workflow".
+4. Find a decrypted YTMusic .ipa file (read [this](#how-to-find-decrypted-youtube-music-ipas) if you don't know where to find one) and upload it to a file provider (filebin.net, Dropbox, Google Drive or catbox.moe; Dropbox and Google Drive share links can be pasted as-is, the workflow converts them to direct download links automatically - the file must be shared as "Anyone with the link"). Paste the url to the necessary field, select the options you want and click "Run workflow".
 5. Wait for the build to finish. You can download the tweaked IPA from the releases section of your forked repo. (If you can't find the releases section, go to your forked repo and add /releases to the url. i.e github.com/user/YTMUltimatePLUS/releases)
+
+## App-local WireGuard (optional, iOS 17+)
+Check **App-local WireGuard** when running the build workflow to include an in-app WireGuard tunnel: YouTube Music's own requests and music streams go through an imported WireGuard `.conf` without a system VPN or network extension. See [docs/WireGuard.md](docs/WireGuard.md) (Korean) for setup, diagnostics and what has to be verified on a device.
 
 ## How to find decrypted YouTube Music IPAs
 
@@ -74,7 +86,7 @@ You can find pre-built IPAs in my [Telegram channel](https://t.me/Mark02workshop
 
 ## IPA building troubleshooting (I can't build the IPA/Github action fails/I can't find the releases section etc.)
 
-99.9% of the time, the culprit is the IPA URL you provided. You HAVE TO provide a decryped IPA. It cannot be any other extension, it has to be a **.ipa** file. Find a decrypted YTMusic IPA (refer to [this](#how-to-find-decrypted-youtube-music-ipas)), upload it to filebin.net, Dropbox or catbox.moe (IF YOU USED DROPBOX, YOU HAVE TO CHANGE THE FINAL PART OF THE LINK FROM dl=0 TO dl=1), give the direct link to the GitHub action. If you find a working ipa and upload it properly, everything will start working perfectly, pinky promise.
+99.9% of the time, the culprit is the IPA URL you provided. You HAVE TO provide a decryped IPA. It cannot be any other extension, it has to be a **.ipa** file. Find a decrypted YTMusic IPA (refer to [this](#how-to-find-decrypted-youtube-music-ipas)), upload it to filebin.net, Dropbox, Google Drive or catbox.moe (Dropbox and Google Drive share links are converted automatically; the file must be public via "Anyone with the link"), and give the link to the GitHub action. If you find a working ipa and upload it properly, everything will start working perfectly, pinky promise.
 
 If the github action works and you cannot find where you can download the result, you need to add /releases to the url of your forked repository. It'll probably look like this: https://github.com/YOURUSERNAME/YTMUltimatePLUS/releases, don't forget to replace the YOURUSERNAME part with your username on GitHub. It may seem invisible but if the github action is successful, IPA will be there as a draft relelase.
 
@@ -94,18 +106,11 @@ MaxMusic is simply a fork of the original [YTMusicUltimate](https://github.com/D
        - Added new custom download tab design, offline playlists and custom offline player for downloaded songs (all with Liquid Glass; credits to @Ilhamaji)
        - New trash bin button to delete songs in download tab
        - Working downloads in newer versions of YT Music
-       - New feature "Download All Playlist Tracks" but still not working, will fix in 1.3 (still not fixed in 1.3 :( )</p>
-       
-  * **1.3 (November 9 2026)**:
-  <p>• Created by myself and added a new fork of Return-YouTube-Music-Dislikes, named Return YTMusic Dislikes MaxMusic, that offers a new feature "Auto Skip Disliked Songs". You can find its settings in YouTube Music > Account
-
-• Added a new tweak for the Last.fm Scrubbler feature, link here (REQUIRES LOGGING IN/CREATING A PERSONAL ACCOUNT TO USE THE APP)
-
-• Removed YouMusicPiP from my pre-compiled IPAs, but you can still integrate it by yourself with GitHub Actions</p>
+       - New feature "Download All Playlist Tracks" but still not working, will fix in 1.3</p>
 
 ## Added tweaks
 >[!NOTE]
->All added tweaks preferences can be found in YTMusic > Account, except for VolumeBoostYT, YouMusicPiP and YTMABConfig (Because them don't have a preferences section in settings or have it in YTMusic > Account > Settings).
+>All added tweaks preferences can be found in YTMusic > Account > Settings, except for VolumeBoostYT and YouMusicPiP (Because them don't have a preferences section in settings).
 >
 >YTMusicUltimate preferences can be
 found in YTMusic > Account.
@@ -114,7 +119,6 @@ found in YTMusic > Account.
   <summary>Return-YouTube-Music-Dislikes</summary>
    <p>Return-YouTube-Music-Dislikes is a tweak based on Return-YouTube-Dislikes that permit to view dislikes in YouTube Music app</p>
      <p><a href="https://github.com/PoomSmart/Return-YouTube-Music-Dislikes">Official repository</a> by <a href="https://github.com/PoomSmart">PoomSmart</a></p>
-     <p><a href="https://github.com/Mark02-2012/RYMD-MaxMusic">My fork of it</a> (the one I'm using in MaxMusic)</p>
    </details>
 
   <details>
@@ -133,10 +137,4 @@ found in YTMusic > Account.
      <summary>VolumeBoostYT</summary>
      <p>VolumeBoostYT is a tweak that was created for YouTube, but it's also compatible with YouTube Music, that permit to adjust and boost your volume from 0 to 2000% with gestures</p>
      <p><a href="https://github.com/VasirakCalgux/VolumeBoostYT">Official repository</a> by <a href="https://github.com/VasirakCalgux">VasirakCalgux</a></p>
-   </details>
-
-   <details>
-     <summary>Last.fm Scrobbler</summary>
-     <p>Last.fm Scrobbler for YouTube Music</a> is a tweak to port the <a href="last.fm">Last.fm</a> scrubbler feature on YouTube Music</p>
-     <p><a href="https://github.com/ImMALWARE/ios-yt-music-last.fm">Official repository</a> by <a href="https://github.com/ImMALWARE">ImMALWARE</a></p>
    </details>

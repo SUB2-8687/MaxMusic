@@ -1,0 +1,155 @@
+name: WireGuard engine check
+
+# Verifies the app-local WireGuard feature without an IPA:
+#  - Go engine unit + loopback tunnel tests with the race detector
+#  - macOS: Apple's NSURLSession + Network.framework through the real engine and
+#    a WireGuard test peer (HTTPS, HTTP 206, tunnel DNS, no direct fallback)
+#  - iOS engine archive and the YTMusicUltimate deb built with WIREGUARD=1
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "WireGuard/**"
+      - "Source/WireGuard/**"
+      - "Source/Prefs/YTMUltimateSettingsController.m"
+      - "tests/wireguard/**"
+      - "tools/ytm_transport_scan.py"
+      - "tools/check_wireguard_strings.py"
+      - "layout/**"
+      - "Makefile"
+      - ".github/workflows/wireguard-check.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  go-tests:
+    name: Go engine tests (race)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: actions/setup-go@v6.5.0
+        with:
+          go-version-file: WireGuard/go.mod
+          cache-dependency-path: WireGuard/go.sum
+      - name: WireGuard language pack (en / ko WireGuard.strings)
+        run: python3 tools/check_wireguard_strings.py
+      - name: Verify modules, vet, test
+        working-directory: WireGuard
+        run: |
+          go mod verify
+          test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+          go vet ./...
+          go test -race -count=1 -v ./...
+
+  macos:
+    name: NSURLSession harness + iOS build
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          path: main
+      - uses: actions/setup-go@v6.5.0
+        with:
+          go-version-file: main/WireGuard/go.mod
+          cache-dependency-path: main/WireGuard/go.sum
+
+      - name: NSURLSession through WireGuard (macOS, real Network.framework)
+        run: python3 main/tests/wireguard/run_macos.py --out wireguard-macos-results.json
+
+      - name: Build iOS engine archive
+        run: bash main/WireGuard/build-ios.sh
+
+      - name: Install Dependencies
+        run: brew install make ldid
+
+      - name: Set PATH environment variables
+        run: |
+          echo "$(brew --prefix make)/libexec/gnubin" >> "$GITHUB_PATH"
+          echo "THEOS=${{ github.workspace }}/theos" >> "$GITHUB_ENV"
+
+      - name: Cache Theos
+        id: theos
+        uses: actions/cache@v5.0.3
+        env:
+          cache-name: theos_cache_9bc7340
+        with:
+          path: theos/
+          key: ${{ env.cache-name }}
+          restore-keys: ${{ env.cache-name }}
+
+      - name: Setup Theos
+        if: steps.theos.outputs.cache-hit != 'true'
+        uses: actions/checkout@v6.0.2
+        with:
+          repository: theos/theos
+          ref: 9bc73406cf80b711ef4d02c15ff1dedc4478a275
+          path: theos
+          submodules: recursive
+
+      - name: Download iOS SDK
+        if: steps.theos.outputs.cache-hit != 'true'
+        run: |
+          git clone --quiet -n --depth=1 --filter=tree:0 https://github.com/theos/sdks.git
+          cd sdks
+          git sparse-checkout set --no-cone iPhoneOS16.5.sdk
+          git checkout
+          mv *.sdk $THEOS/sdks
+
+      - name: Clone headers
+        run: |
+          for repo in YouTubeHeader PSHeader YouTubeMusicHeader; do
+            if [ -d "$THEOS/include/$repo" ]; then
+              (cd "$THEOS/include/$repo" && git pull --quiet)
+            else
+              (cd "$THEOS/include" && git clone --quiet --depth=1 "https://github.com/PoomSmart/$repo.git")
+            fi
+          done
+
+      - name: Build YTMusicUltimate deb with WIREGUARD=1
+        run: |
+          cd main
+          make clean package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless SIDELOADING=1 WIREGUARD=1
+          DEB=$(ls packages/*.deb | head -1)
+          mkdir -p ../wg-check && cp "$DEB" ../wg-check/
+          cd ../wg-check && mkdir x && cd x && ar x ../*.deb && tar -xf data.tar.*
+          DYLIB=$(find . -name 'YTMusicUltimate.dylib' | head -1)
+          echo "dylib: $DYLIB"
+          otool -L "$DYLIB" | grep -E "Network|Security|libresolv"
+          grep -aq nw_proxy_config_create_socksv5 "$DYLIB" || { echo "WireGuard core not linked"; exit 1; }
+          find . -name 'WireGuard-THIRD_PARTY_LICENSES.txt' | grep -q . || { echo "license file missing"; exit 1; }
+          if grep -aq YTMUWG_TEST "$DYLIB"; then echo "test-only code in release dylib"; exit 1; fi
+
+      - name: Default build (no WIREGUARD) still builds without the engine
+        run: |
+          cd main
+          rm -rf packages && make clean package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless SIDELOADING=1
+          mkdir -p ../default-check && cd ../default-check && ar x ../main/packages/*.deb && mkdir x && tar -xf data.tar.* -C x
+          DYLIB=$(find x -name 'YTMusicUltimate.dylib' | head -1)
+          if grep -aq nw_proxy_config_create_socksv5 "$DYLIB"; then echo "WireGuard code in default build"; exit 1; fi
+          if otool -L "$DYLIB" | grep -q libresolv; then echo "engine linked into default build"; exit 1; fi
+          ls -l "$DYLIB"
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## App-local WireGuard check"
+            if [ -f wireguard-macos-results.json ]; then
+              echo '```json'; cat wireguard-macos-results.json; echo '```'
+            fi
+            shasum -a 256 main/WireGuard/build/libytmuwg.a wg-check/*.deb 2>/dev/null | sed 's/^/    /'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: ytmusicultimate-wireguard-deb
+          path: |
+            wg-check/*.deb
+            wireguard-macos-results.json
+          if-no-files-found: warn

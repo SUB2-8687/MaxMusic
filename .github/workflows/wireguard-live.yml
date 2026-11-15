@@ -1,0 +1,45 @@
+name: WireGuard live server check
+
+# Connects the app-local WireGuard core to a REAL WireGuard server and checks,
+# through Apple's NSURLSession on macOS: handshake, DNS inside the tunnel, exit
+# country, HTTPS and an HTTP 206 range response.
+#
+# The profile is read only from the repository secret WG_TEST_CONF (the full
+# .conf text). It is never committed, printed or uploaded; the harness output
+# contains counters, the exit country and a masked exit IP only.
+on:
+  workflow_dispatch:
+    inputs:
+      expect_country:
+        description: "Expected exit country code (empty = do not check)"
+        default: "US"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: actions/setup-go@v6.5.0
+        with:
+          go-version-file: WireGuard/go.mod
+          cache-dependency-path: WireGuard/go.sum
+
+      - name: Live check through the configured WireGuard server
+        env:
+          WG_TEST_CONF: ${{ secrets.WG_TEST_CONF }}
+          EXPECT_COUNTRY: ${{ inputs.expect_country }}
+        run: |
+          if [ -z "$WG_TEST_CONF" ]; then
+            echo "::error::Add the repository secret WG_TEST_CONF (Settings > Secrets and variables > Actions) with the .conf text."
+            exit 1
+          fi
+          umask 077
+          profile="$RUNNER_TEMP/wg-live.conf"
+          printf '%s\n' "$WG_TEST_CONF" > "$profile"
+          trap 'rm -f "$profile"' EXIT
+          python3 tests/wireguard/run_macos.py --live-profile "$profile" --expect-country "$EXPECT_COUNTRY"
